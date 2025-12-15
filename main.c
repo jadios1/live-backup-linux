@@ -15,55 +15,157 @@
 #include <time.h>
 #include <aio.h>
 
+#define ERR(source) \
+    (fprintf(stderr, "%s:%d\n", __FILE__, __LINE__), perror(source), exit(EXIT_FAILURE))
+
+
+/*
+
+add /Users/janczyzewski/Documents/sopytemp/source /Users/janczyzewski/Documents/sopytemp/dest
+
+*/
+
+void usage()
+{
+    
+}
+
+
+void add(char **argz,int wordcount)
+{
+    char source_path[PATH_MAX];
+    char target_path[PATH_MAX];
+    
+    strcpy(source_path,argz[0]);
+    strcpy(target_path,argz[1]);
+    
+    char real_target_path[PATH_MAX];
+    char real_source_path[PATH_MAX];
+    
+    if(realpath(target_path,real_target_path)==NULL)
+    {
+        mkdir(target_path, 0777);
+        realpath(target_path,real_target_path);
+    }
+
+    if(realpath(source_path,real_source_path)==NULL) ERR("realpath2");
+
+    if(strcmp(real_source_path,real_target_path)==0) 
+    {
+        usage();
+        return;
+    }
+
+    DIR *source_dir = opendir(real_source_path);
+    DIR *target_dir = opendir(real_target_path);
+
+    if (source_dir == NULL)
+    {
+        printf("Could not open current directory" );
+        usage();
+        return;
+    }
+    if (target_dir == NULL)
+    {
+        printf("Could not open current directory" );
+        usage();
+        return;
+    }
+
+
+
+
+
+
+}
+
+void end(char **argz,int wordcount)
+{
+
+}
+
+void restore(char **argz,int wordcount)
+{
+
+}
+
+void list()
+{
+
+}
+
+void exit_func()
+{
+    exit(0);
+}
+
+
 void execute_command(char* buf,ssize_t nread)
 {
-    char argz[64][nread];
-    int word = 0,character = 0;
-
+    char *argz[64];
+    int word = 0,character = 0,length = 0;
+    char arg[1024];
+    bool quote = false;
     for(int i = 0 ; i < nread;i++)
     {
-        if(buf[i] == ' ' || buf[i] == '\n')
+        if(buf[i] == '"')
         {
-            argz[word][character] = '\0';
+            if(quote == false) quote = true;
+            else quote = false;
+            continue;
+        }
+        if((buf[i] == ' ' && quote == false) || buf[i] == '\n')
+        {
+            if(character > 0)
+            {
+            arg[character] = '\0';
+            argz[word] = strdup(arg);            
             word++;
             character = 0;
+            }
         }
         else
         {
-        argz[word][character] = buf[i];
-        character++;
+            arg[character] = buf[i];
+            character++;
         }
     }
+    if (word == 0) return;
 
-    char token[10];
-    strcpy(token,argz[0]);
-    printf("to slowo : %s\n",token);
-
-    if(strcmp(token,"add")==0)
+    if(strcmp(argz[0],"add")==0)
     {
-        add(argz,word);
+        add(argz+1,word-1);
     }
-    else if(strcmp(token,"end")==0)
+    else if(strcmp(argz[0],"end")==0)
     {
-        end(argz,word);
+        end(argz+1,word-1);
     }
-    else if(strcmp(token,"restore")==0)
+    else if(strcmp(argz[0],"restore")==0)
     {
-        restore(argz,word);
+        restore(argz+1,word-1);
     }
-    else if(strcmp(token,"list")==0)
+    else if(strcmp(argz[0],"list")==0)
     {
         list();
     }
-    else if(strcmp(token,"exit")==0)
+    else if(strcmp(argz[0],"exit")==0)
     {
-        exit_command();
+        for(int i = 0; i < word;i++)
+        {
+            free(argz[i]);
+        }
+        exit_func();
     }
     else
     {
         usage();
     }
+    printf("%s\n",argz[0]);
 
+    for(int i = 0 ; i < word;i++)
+    {
+        free(argz[i]);
+    }
 }
 
 int main(int argc,char **argv)
@@ -71,15 +173,16 @@ int main(int argc,char **argv)
 
     char *buf = NULL;
     size_t len;
-
+    printf("commands : add, end, list, restore, exit.\n");
     while(1)
     {
         printf("> ");
         fflush(stdout);
-        ssize_t nread =getline(&buf,&len,stdin);
+        ssize_t nread = getline(&buf,&len,stdin);
         execute_command(buf,nread);
-        if (nread == -1) break;
+        if (nread == -1) break; 
     }
 
 
 }
+
