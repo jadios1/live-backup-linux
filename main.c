@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,6 +15,7 @@
 #include <errno.h>
 #include <time.h>
 #include <aio.h>
+#include <linux/limits.h>
 
 #define ERR(source) \
     (fprintf(stderr, "%s:%d\n", __FILE__, __LINE__), perror(source), exit(EXIT_FAILURE))
@@ -30,6 +32,46 @@ void usage()
     
 }
 
+void copyfile(char* source_file_path, char* target_file_path,struct stat stat)
+{
+    int fd_to;
+    int fd_from;
+    ssize_t nread;
+    char buf[4096];
+    
+    
+    if((fd_from = open(source_file_path, O_RDONLY))<0) ERR("open");
+    if((fd_to = open(target_file_path, O_WRONLY | O_CREAT | O_EXCL, stat.st_mode))<0) ERR("open");    
+
+
+    while (nread = read(fd_from, buf, sizeof(buf)), nread > 0)
+    {
+        char *out_ptr = buf;
+        ssize_t nwritten;
+
+        do {
+            nwritten = write(fd_to, out_ptr, nread);
+
+            if (nwritten >= 0)
+            {
+                nread -= nwritten;
+                out_ptr += nwritten;
+            }
+        } while (nread > 0);
+    }
+
+    if (nread == 0)
+    {
+        if (close(fd_to) < 0)
+        {
+            fd_to = -1;
+            perror("file close");
+            return;
+        }
+        close(fd_from);
+    }
+}
+
 void copyfiles(char* source_path,char* target_path)
 {
     
@@ -38,6 +80,9 @@ void copyfiles(char* source_path,char* target_path)
 
     struct dirent *dp;
     struct stat filestat;
+
+    char source_file_path[PATH_MAX];
+    char target_file_path[PATH_MAX];
 
 
     if (source_dir == NULL){
@@ -57,15 +102,26 @@ void copyfiles(char* source_path,char* target_path)
         errno = 0;
         if ((dp = readdir(source_dir)) != NULL)
         {
-            if (lstat(dp->d_name, &filestat))
+            if(snprintf(source_file_path,PATH_MAX,"%s/%s",source_path,dp->d_name)<0)ERR("snprinf soruce_full_file_path");
+            if(snprintf(target_file_path,PATH_MAX,"%s/%s",target_path,dp->d_name)<0)ERR("snprinf target_full_file_path");
+
+
+            if (lstat(source_file_path, &filestat))
                 ERR("lstat");
-            if (S_ISDIR(filestat.st_mode))
+
+            
+            if(S_ISREG(filestat.st_mode))
             {
-                continue;
+                copyfile(source_file_path,target_file_path,filestat);
+            }
+            else if (S_ISDIR(filestat.st_mode))
+            {
+                //tutaj niech to zrobi folder w target path i wywola funkcje copy files dla nowego folderu :D
+                continue; 
+                //copyfiles()
             }
         }
-    } 
-    while (dp != NULL);
+    }while (dp != NULL);
 
 
     if (closedir(source_dir)) ERR("closedir");
@@ -100,6 +156,7 @@ void add(char **argz,int wordcount)
     }
     //
     //DODAJ SPRAWDZANIE CZY TARGET PATH NIE JEST SUBDIRECTORY SOURCE DIRECTORY!!!!!!!!!
+    //ZMIEN KURWA ZEBY TO NIE WYPIERDALALO TEN ZNACZY ZEBY NAJPIERW SPRAWDZALO CZY TO JEST SCIEZKA PO PROSTU A NIE BLAD REALPATH!
     //
 
 
@@ -112,8 +169,6 @@ void add(char **argz,int wordcount)
             return;
         }
     }
-
-
 
     copyfiles(real_source_path,real_target_path);
 
@@ -143,7 +198,7 @@ void exit_func()
 void execute_command(char* buf,ssize_t nread)
 {
     char *argz[64];
-    int word = 0,character = 0,length = 0;
+    int word = 0,character = 0;
     char arg[1024];
     bool quote = false;
     for(int i = 0 ; i < nread;i++)
@@ -208,6 +263,8 @@ void execute_command(char* buf,ssize_t nread)
     }
 }
 
+
+
 int main(int argc,char **argv)
 {
 
@@ -222,6 +279,8 @@ int main(int argc,char **argv)
         execute_command(buf,nread);
         if (nread == -1) break; 
     }
+    
+    return 0;
 
 
 }
