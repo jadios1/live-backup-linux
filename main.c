@@ -30,6 +30,49 @@ void usage()
     
 }
 
+void copyfiles(char* source_path,char* target_path)
+{
+    
+    DIR *source_dir = opendir(source_path);
+    DIR *target_dir = opendir(target_path);
+
+    struct dirent *dp;
+    struct stat filestat;
+
+
+    if (source_dir == NULL){
+        printf("Could not open current directory" );
+        usage();
+        return;
+    }
+
+    if (target_dir == NULL){
+        printf("Could not open current directory" );
+        usage();
+        return;
+    }
+
+
+    do{
+        errno = 0;
+        if ((dp = readdir(source_dir)) != NULL)
+        {
+            if (lstat(dp->d_name, &filestat))
+                ERR("lstat");
+            if (S_ISDIR(filestat.st_mode))
+            {
+                continue;
+            }
+        }
+    } 
+    while (dp != NULL);
+
+
+    if (closedir(source_dir)) ERR("closedir");
+    if (closedir(target_dir)) ERR("closedir");
+
+}   
+
 
 void add(char **argz,int wordcount)
 {
@@ -55,27 +98,24 @@ void add(char **argz,int wordcount)
         usage();
         return;
     }
+    //
+    //DODAJ SPRAWDZANIE CZY TARGET PATH NIE JEST SUBDIRECTORY SOURCE DIRECTORY!!!!!!!!!
+    //
 
-    DIR *source_dir = opendir(real_source_path);
-    DIR *target_dir = opendir(real_target_path);
 
-    if (source_dir == NULL)
-    {
-        printf("Could not open current directory" );
-        usage();
-        return;
-    }
-    if (target_dir == NULL)
-    {
-        printf("Could not open current directory" );
-        usage();
-        return;
+    size_t source_length = strlen(real_source_path);
+    if (strncmp(real_source_path, real_target_path, source_length) == 0) {
+
+        if (real_target_path[source_length] == '\0' || real_target_path[source_length] == '/') {
+
+            printf("target cannot be inside source directory.\n");
+            return;
+        }
     }
 
 
 
-
-
+    copyfiles(real_source_path,real_target_path);
 
 }
 
