@@ -116,7 +116,7 @@ void copyfiles(char* source_path,char* target_path)
             }
             else if (S_ISDIR(filestat.st_mode))
             {
-                //tutaj niech to zrobi folder w target path i wywola funkcje copy files dla nowego folderu :D
+                copyfiles(source_file_path,target_file_path);
                 continue; 
                 //copyfiles()
             }
