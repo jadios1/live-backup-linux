@@ -4,5 +4,17 @@
 # 2. Zrób wyjątek dla main.c (to chcesz wysłać)
 !main.c
 
+!file_ops.c
+!file_ops.h
+
+!utils.c
+!utils.h
+
+!common.h
+
+
+!main.c
+
 # 3. WAŻNE: Zrób wyjątek dla samego pliku .gitignore (żeby git o nim pamiętał)
 !.gitignore
+
