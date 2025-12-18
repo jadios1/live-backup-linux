@@ -12,6 +12,8 @@
 
 !common.h
 
+!inotify.c
+!inotify.h
 
 !main.c
 

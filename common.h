@@ -17,6 +17,7 @@
 #include <stdbool.h>
 #include <errno.h>
 #include <time.h>
+#include <sys/inotify.h>
 
 #define ERR(source) \
     (fprintf(stderr, "%s:%d\n", __FILE__, __LINE__), perror(source), exit(EXIT_FAILURE))

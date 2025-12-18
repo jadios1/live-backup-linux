@@ -1,5 +1,7 @@
 #include "utils.h"
-
+#include "file_ops.h"
+#include "common.h"
+#include "inotify.h"
 
 // #include <linux/limits.h>
 
@@ -11,13 +13,9 @@
 
 add /Users/janczyzewski/Documents/sopytemp/source /Users/janczyzewski/Documents/sopytemp/dest /Users/janczyzewski/Documents/sopytemp/dest2
 
-*/
+add /home/jadios/Documents/sop_temp/source /home/jadios/Documents/sop_temp/dest  
 
-void usage()
-{
-    return;
-}
-    
+*/
 
 
 
@@ -29,6 +27,8 @@ void add(char **argz,int wordcount)
     pid_t pid;
 
     char real_source_path[PATH_MAX];
+    char real_target_path[PATH_MAX];
+
 
     strcpy(source_path,argz[0]);
 
@@ -41,18 +41,34 @@ void add(char **argz,int wordcount)
     {
         strcpy(target_path,argz[i]);
         if((directory_checker(target_path,real_source_path))==true)
-        {        
+        {
             if((pid = fork())<0)ERR("fork");
 
             if(pid==0)
             {
-                copyfiles(real_source_path,target_path);
+                realpath(target_path,real_target_path);
+                copyfiles(real_source_path,target_path,real_source_path,real_target_path);
+
+                AllWatches allwatches;
+                allwatches.fd = inotify_init();
+                allwatches.capacity = INITIAL_WATCH_CAPACITY;
+                allwatches.count = 0;
+                allwatches.watches = malloc(sizeof(Watch) * allwatches.capacity);
+                strcpy(allwatches.root_src,real_source_path);
+                strcpy(allwatches.root_tgt,real_target_path);
+                add_watches(&allwatches, real_source_path);
                 exit(EXIT_SUCCESS);
             }
 
 
         }
     }
+}
+
+
+void usage_func()
+{
+    printf("usagebruh\n");
 }
 
 void end(char **argz,int wordcount)
@@ -134,7 +150,7 @@ void execute_command(char* buf,ssize_t nread)
     }
     else
     {
-        usage();
+        usage_func();
     }
     printf("%s\n",argz[0]);
 
