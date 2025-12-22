@@ -1,13 +1,14 @@
 #include "common.h"
 #define INITIAL_WATCH_CAPACITY 16
 
-
-typedef struct {
+typedef struct
+{
     int wd;
     char *path;
 } Watch;
 
-typedef struct {
+typedef struct
+{
     int fd;
     Watch *watches;
     int count;
@@ -16,7 +17,7 @@ typedef struct {
     char root_tgt[PATH_MAX];
 } AllWatches;
 
-char* get_path_from_wd(AllWatches *aw, int wd);
+char *get_path_from_wd(AllWatches *aw, int wd);
 
 void translate_path(const char *src_full, AllWatches *aw, char *target_full);
 
