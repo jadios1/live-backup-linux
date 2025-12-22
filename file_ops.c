@@ -118,9 +118,16 @@ void copyfiles(char* source_path, char* target_path, char* root_source_path, cha
         }
 
         if (snprintf(source_file_path, PATH_MAX, "%s/%s", source_path, dp->d_name) < 0)
-            ERR("snprinf soruce_full_file_path");
+        {
+            perror("snprintf");
+            return;
+        }    
+        
         if (snprintf(target_file_path, PATH_MAX, "%s/%s", target_path, dp->d_name) < 0)
-            ERR("snprinf target_full_file_path");
+        {
+            perror("snprintf");
+            return;
+        }
 
         if (lstat(source_file_path, &filestat))
         {
