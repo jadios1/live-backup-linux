@@ -8,10 +8,12 @@ bool directory_checker(char *target_path, char *real_source) {
 
     if (realpath(target_path, real_target) == NULL) {
         if (mkdir(target_path, 0777) != 0) {
-            ERR("realpath for target_path");
+            perror("mkdir");
+            return false;
         }
         if (realpath(target_path, real_target) == NULL) {
-            ERR("realpath for target_path");
+            perror("realpath for target_path");
+            return false;
         }
     }
     if (strcmp(real_source, real_target) == 0) {
@@ -27,7 +29,8 @@ bool directory_checker(char *target_path, char *real_source) {
 
     struct stat st;
     if (stat(real_target, &st) != 0) {
-        ERR("stat for target_path");
+        perror("stat for target_path");
+        return false;
     }
 
     if (!S_ISDIR(st.st_mode)) {
@@ -37,7 +40,8 @@ bool directory_checker(char *target_path, char *real_source) {
 
     DIR *dir = opendir(real_target);
     if (!dir) {
-        ERR("opendir realpath");
+        perror("opendir realpath");
+        return false;
     }
 
     struct dirent *entry;
@@ -58,3 +62,4 @@ bool directory_checker(char *target_path, char *real_source) {
 
     return true;
 }
+
