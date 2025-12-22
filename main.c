@@ -100,7 +100,6 @@ void usage_func() { fprintf(stderr, "commands : add, end, list, restore, exit.\n
 
 void end(char **argz, int wordcount, proc **processes, int *process_count)
 {
-    printf("dziala end btw\n");
 
     char real_target[PATH_MAX];
     char source_path[PATH_MAX];
